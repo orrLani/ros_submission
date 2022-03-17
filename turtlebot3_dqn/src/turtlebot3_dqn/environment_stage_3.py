@@ -25,16 +25,13 @@ from geometry_msgs.msg import Twist, Point, Pose
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 from std_srvs.srv import Empty
-# from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from respawnGoal import Respawn
 
 class Env():
-    def __init__(self, action_size, list_of_dirty_locations):
-        #self.goal_x_list = [0] * len(list_of_dirty_locations)
-        #self.goal_y_list = [0] * len(list_of_dirty_locations)
-        self.goal_x= 0
-        self.goal_y= 0
-        self.which_dirty_is_goal= 0
+    def __init__(self, action_size):
+        self.goal_x = 0
+        self.goal_y = 0
         self.heading = 0
         self.action_size = action_size
         self.initGoal = True
@@ -45,25 +42,18 @@ class Env():
         self.reset_proxy = rospy.ServiceProxy('gazebo/reset_simulation', Empty)
         self.unpause_proxy = rospy.ServiceProxy('gazebo/unpause_physics', Empty)
         self.pause_proxy = rospy.ServiceProxy('gazebo/pause_physics', Empty)
-        self.list_respawn_goal=[]
-        for i, dirty in enumerate(list_of_dirty_locations):
-            self.list_respawn_goal.append(Respawn(str(i)+"_dirty", dirty[0], dirty[1]))
-        self.flag = 1
+        self.respawn_goal = Respawn()
 
     def getGoalDistace(self):
-        temp_list = []
-        for i, respawn in enumerate(self.list_respawn_goal):
-            goal_distance = round(math.hypot(respawn.goal_position.position.x - self.position.x, respawn.goal_position.position.y - self.position.y), 2)
-            temp_list.append((goal_distance, i))
+        goal_distance = round(math.hypot(self.goal_x - self.position.x, self.goal_y - self.position.y), 2)
 
-        return min(temp_list)
+        return goal_distance
 
     def getOdometry(self, odom):
         self.position = odom.pose.pose.position
         orientation = odom.pose.pose.orientation
         orientation_list = [orientation.x, orientation.y, orientation.z, orientation.w]
-        yaw = math.atan2(orientation.w,orientation.z)
-        # _, _, yaw = euler_from_quaternion(orientation_list)
+        _, _, yaw = euler_from_quaternion(orientation_list)
 
         goal_angle = math.atan2(self.goal_y - self.position.y, self.goal_x - self.position.x)
 
@@ -75,6 +65,7 @@ class Env():
             heading += 2 * pi
 
         self.heading = round(heading, 2)
+
     def getState(self, scan):
         scan_range = []
         heading = self.heading
@@ -89,6 +80,8 @@ class Env():
             else:
                 scan_range.append(scan.ranges[i])
 
+        obstacle_min_range = round(min(scan_range), 2)
+        obstacle_angle = np.argmin(scan_range)
         if min_range > min(scan_range) > 0:
             done = True
 
@@ -96,12 +89,12 @@ class Env():
         if current_distance < 0.2:
             self.get_goalbox = True
 
-        return scan_range + [heading, current_distance], done
+        return scan_range + [heading, current_distance, obstacle_min_range, obstacle_angle], done
 
     def setReward(self, state, done, action):
         yaw_reward = []
-        current_distance = state[-1]
-        heading = state[-2]
+        current_distance = state[-3]
+        heading = state[-4]
 
         for i in range(5):
             angle = -pi / 4 + heading + (pi / 8 * i) + pi / 2
@@ -113,16 +106,15 @@ class Env():
 
         if done:
             rospy.loginfo("Collision!!")
-            reward = -200
+            reward = -150
             self.pub_cmd_vel.publish(Twist())
 
         if self.get_goalbox:
             rospy.loginfo("Goal!!")
             reward = 200
             self.pub_cmd_vel.publish(Twist())
-            #self.goal_x, self.goal_y = self.respawn_goal.getPosition(True, delete=True)
-            self.goal_distance, self.which_dirty_is_goal = self.getGoalDistace()
-            self.goal_x, self.goal_y = self.list_respawn_goal[self.which_dirty_is_goal].getPosition(True, delete=True)
+            self.goal_x, self.goal_y = self.respawn_goal.getPosition(True, delete=True)
+            self.goal_distance = self.getGoalDistace()
             self.get_goalbox = False
 
         return reward
@@ -135,7 +127,6 @@ class Env():
         vel_cmd.linear.x = 0.15
         vel_cmd.angular.z = ang_vel
         self.pub_cmd_vel.publish(vel_cmd)
-        #8694
 
         data = None
         while data is None:
@@ -163,21 +154,11 @@ class Env():
             except:
                 pass
 
-        # here we put the yoristic function
-        self.goal_distance, self.which_dirty_is_goal = self.getGoalDistace()
-        self.goal_x, self.goal_y = self.list_respawn_goal[self.which_dirty_is_goal].create_square()
+        if self.initGoal:
+            self.goal_x, self.goal_y = self.respawn_goal.getPosition()
+            self.initGoal = False
 
-        for i, respawn in enumerate(self.list_respawn_goal):
-            if(i==self.which_dirty_is_goal):
-                pass
-            else:
-                _, _ = respawn.create_square()
-
+        self.goal_distance = self.getGoalDistace()
         state, done = self.getState(data)
 
         return np.asarray(state)
-
-    def getRespawn(self, x, y):
-        for respawn in self.list_respawn_goal:
-            if(respawn.init_goal_x==x and respawn.init_goal_y==y):
-                return respawn

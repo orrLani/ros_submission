@@ -49,9 +49,8 @@ class Env():
         for i, dirty in enumerate(list_of_dirty_locations):
             self.list_respawn_goal.append(Respawn(str(i)+"_dirty", dirty[0], dirty[1]))
         self.flag = 1
-
     def getGoalDistace(self):
-        temp_list = []
+        temp_list=[]
         for i, respawn in enumerate(self.list_respawn_goal):
             goal_distance = round(math.hypot(respawn.goal_position.position.x - self.position.x, respawn.goal_position.position.y - self.position.y), 2)
             temp_list.append((goal_distance, i))
@@ -163,16 +162,17 @@ class Env():
             except:
                 pass
 
-        # here we put the yoristic function
+        if self.initGoal:
+            self.goal_distance, self.which_dirty_is_goal = self.getGoalDistace()
+            self.goal_x, self.goal_y = self.list_respawn_goal[self.which_dirty_is_goal].getPosition()
+            for i, respawn in enumerate(self.list_respawn_goal):
+                if(i==self.which_dirty_is_goal):
+                    pass
+                else:
+                    respawn.getPosition()
+            self.initGoal = False
+
         self.goal_distance, self.which_dirty_is_goal = self.getGoalDistace()
-        self.goal_x, self.goal_y = self.list_respawn_goal[self.which_dirty_is_goal].create_square()
-
-        for i, respawn in enumerate(self.list_respawn_goal):
-            if(i==self.which_dirty_is_goal):
-                pass
-            else:
-                _, _ = respawn.create_square()
-
         state, done = self.getState(data)
 
         return np.asarray(state)
