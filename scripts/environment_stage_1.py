@@ -40,8 +40,8 @@ class Env():
         self.initGoal = True
         self.get_goalbox = False
         self.position = Pose()
-        self.pub_cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=5)
-        self.sub_odom = rospy.Subscriber('odom', Odometry, self.getOdometry)
+        self.pub_cmd_vel = rospy.Publisher('/tb3_0/cmd_vel', Twist, queue_size=5)
+        self.sub_odom = rospy.Subscriber('/tb3_0/odom', Odometry, self.getOdometry)
         self.reset_proxy = rospy.ServiceProxy('gazebo/reset_simulation', Empty)
         self.unpause_proxy = rospy.ServiceProxy('gazebo/unpause_physics', Empty)
         self.pause_proxy = rospy.ServiceProxy('gazebo/pause_physics', Empty)
@@ -122,7 +122,7 @@ class Env():
             self.pub_cmd_vel.publish(Twist())
             #self.goal_x, self.goal_y = self.respawn_goal.getPosition(True, delete=True)
             self.goal_distance, self.which_dirty_is_goal = self.getGoalDistace()
-            self.goal_x, self.goal_y = self.list_respawn_goal[self.which_dirty_is_goal].getPosition(True, delete=True)
+            self.goal_x, self.goal_y = self.list_respawn_goal[self.which_dirty_is_goal].create_square(True, delete=True)
             self.get_goalbox = False
 
         return reward
@@ -159,7 +159,7 @@ class Env():
         data = None
         while data is None:
             try:
-                data = rospy.wait_for_message('scan', LaserScan, timeout=5)
+                data = rospy.wait_for_message('/tb3_0/scan', LaserScan, timeout=5)
             except:
                 pass
 

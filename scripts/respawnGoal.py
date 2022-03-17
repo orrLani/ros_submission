@@ -84,7 +84,7 @@ class Respawn():
 
     def create_square(self, position_check=False, delete=False):
         if delete:
-            self.deleteModel(self)
+            self.deleteModel()
 
         self.goal_position.position.x = self.init_goal_x
         self.goal_position.position.y = self.init_goal_y
