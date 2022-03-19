@@ -164,7 +164,7 @@ def quanterntion_from_euler(x,y,z):
 
 
 if __name__ == '__main__':
-    rospy.init_node('turtlebot3_dqn_stage_1')
+    rospy.init_node('rl_algoritem')
     pub_result = rospy.Publisher('result', Float32MultiArray, queue_size=5)
     pub_get_action = rospy.Publisher('get_action', Float32MultiArray, queue_size=5)
     result = Float32MultiArray()
