@@ -7,6 +7,7 @@ import numpy as np
 import random
 import time
 import sys
+import subprocess
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from collections import deque
 from std_msgs.msg import Float32MultiArray
@@ -125,9 +126,6 @@ class ReinforceAgent():
         self.model.fit(X_batch, Y_batch, batch_size=self.batch_size, epochs=1, verbose=0)
 
 
-
-
-
 if __name__ == '__main__':
 
     rospy.init_node('rl_algoritem')
@@ -139,7 +137,6 @@ if __name__ == '__main__':
     except (rospy.ServiceException) as e:
         print("gazebo/reset_simulation service call failed")
 
-
     rospy.loginfo("gazebo is start!!")
     pub_result = rospy.Publisher('result', Float32MultiArray, queue_size=5)
     pub_get_action = rospy.Publisher('get_action', Float32MultiArray, queue_size=5)
@@ -147,7 +144,6 @@ if __name__ == '__main__':
     get_action = Float32MultiArray()
     state_size = 26
     action_size = 5
-
     # list_of_dirty=[(0.1,0.1),(1,2),(1,4)]
 
     # load the env
@@ -157,12 +153,13 @@ if __name__ == '__main__':
     scores, episodes = [], []
     global_step = 0
     start_time = time.time()
-    EPISODES = 5
+    EPISODES = 10
     for e in range(agent.load_episode + 1, EPISODES):
         rospy.loginfo('Episode start' + str(e))
         done = False
         done_time_out = False
         state = env.reset()
+        time.sleep(5)
         score = 0
         # for t in range(agent.episode_step):
         for t in range(100):

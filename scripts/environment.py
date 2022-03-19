@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import time
 
 import rospy
 import numpy as np
@@ -9,7 +10,7 @@ from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 from std_srvs.srv import Empty
 from std_msgs.msg import String
-
+import subprocess
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from mapPointDirty import map_point_dirty
 
@@ -41,6 +42,12 @@ class Env():
         self.dirty_location = list()
         _ = rospy.Subscriber('/dirt', String, self.get_dirty_update)
         self.flag = 1
+
+        self.reset_dirt = rospy.Publisher('reset_command', String, queue_size=1)
+
+        # process
+        self.dirty_proc = None
+        self.dummy_agent_proc = None
 
     # update the dirty
     def get_dirty_update(self, msg):
@@ -186,18 +193,70 @@ class Env():
         # reset the simulator
         rospy.loginfo("Prepare to reset the simulator!!")
         rospy.wait_for_service('gazebo/reset_simulation')
+
         try:
             self.reset_proxy()
         except (rospy.ServiceException) as e:
             print("gazebo/reset_simulation service call failed")
 
+        # reset the dirty publisher
+        # gnome-terminal --title="Python dirty" -e "bash -c \"cd ~/my_ws ; source devel/setup.bash ; export TURTLEBOT3_MODEL=burger ; sleep 5 ; rosrun MRS_236609 dirt_publisher_ex3.py ; $SHELL\""
+
+        # remove all dirty
+        # run again the dirty
+
+        rospy.loginfo("Prepare to reset dirty!!")
+        for dirty in self.map_point_dirty_list:
+            dirty.deleteModel()
+
+        # reset dirty
+        self.dirty_location_list = list()
+        self.map_point_dirty_list = list()
+        self.dirty_location_msg = ""
+        self.dirty_location = list()
+        command = 'rosrun MRS_236609 dirt_publisher_ex3.py'
+        self.common_dirty = command
+
+
+        # command = 'recordmydesktop --on-the-fly-encoding -o videos/episode'
+        # self.dirty_proc = subprocess.Popen('rosrun MRS_236609 dirt_publisher_ex3.py', shell=True)
+        # self.dirty_proc = subprocess.Popen('rosrun MRS_236609 dirt_publisher_ex3.py', shell=True)
+
+        # dirty process
+        if self.dirty_proc is not None:
+            self.dirty_proc.kill()
+
+        # agent process
+        if self.dummy_agent_proc is not None:
+            self.dummy_agent_proc.kill()
+
+        self.dirty_proc = subprocess.Popen('rosrun MRS_236609 dirt_publisher_ex3.py', shell=True)
+        self.dummy_agent_proc = subprocess.Popen('rosrun ros_submission dummy_agent.py', shell=True)
+
+        time.sleep(5)
+        subprocess.call('/home/orr/my_ws/src/ros_submission/scripts/ros_rviz_shell')
+        # subprocess.call('/home/orr/my_ws/src/ros_submission/scripts/ros_dirty_shell')
+        time.sleep(10)
+        rospy.loginfo("load the rviz")
+        # reset opp agent
+        # subprocess.call('/home/orr/my_ws/src/ros_submission/scripts/ros_dummy_shell')
+        # time.sleep(10)
+        # resert rviz
+        # subprocess.call('/home/orr/my_ws/src/ros_submission/scripts/ros_rviz_shell')
+        # time.sleep(20)
+
+
+        # gnome-terminal --title="Python dirty" -e "bash -c \"cd ~/my_ws ; source devel/setup.bash ; export TURTLEBOT3_MODEL=burger ; sleep 5 ; rosrun MRS_236609 dirt_publisher_ex3.py ; $SHELL\""
+
+
+
+        # TODO REMOVE THATS (we need that?)
         data = None
         while data is None:
             try:
                 data = rospy.wait_for_message('/tb3_0/scan', LaserScan, timeout=5)
             except:
                 pass
-
         # TODO create dirty function
         # for dirty in self.map_point_dirty_list:
         #    _,_ = dirty.create_square()
