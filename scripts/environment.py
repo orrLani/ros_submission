@@ -18,22 +18,33 @@ def Diff(li1, li2):
     return list(set(li1) - set(li2))
 
 class Env():
-    def __init__(self, action_size):
+    def __init__(self,agent_id, action_size):
         self.goal_x = 0
         self.goal_y = 0
         self.which_dirty_is_goal = 0
         self.heading = 0
-        self.action_size = action_size
+        # self.action_size = action_size
         self.initGoal = True
         self.get_goalbox = False
         self.position = Pose()
-        self.pub_cmd_vel = rospy.Publisher('/tb3_0/cmd_vel', Twist, queue_size=5)
+        self.pub_cmd_vel = rospy.Publisher('/tb3_{}/cmd_vel'.format(agent_id), Twist, queue_size=5)
 
+        # gazebo messages
         self.reset_proxy = rospy.ServiceProxy('gazebo/reset_simulation', Empty)
         self.unpause_proxy = rospy.ServiceProxy('gazebo/unpause_physics', Empty)
         self.pause_proxy = rospy.ServiceProxy('gazebo/pause_physics', Empty)
 
-        _ = rospy.Subscriber('/tb3_0/odom', Odometry, self.getOdometry)
+        # input messages
+        _ = rospy.Subscriber('/tb3_{}/odom'.format(agent_id), Odometry, self.get_my_odometry)
+        _ = rospy.Subscriber('/tb3_{}/odom'.format(1- agent_id), Odometry, self.get_opp_odometry)
+
+        # position
+        # sub_current_pose = rospy.Subscriber('/tb3_{}'.format(agent_id), PoseWithCovarianceStamped, callback0)
+        
+
+        # get enmy goal
+        # _ = rospy.Subscriber('/tb3_{}/goal'.format(1- agent_id), Odometry, self.get_opp_odometry)
+
 
         # dirty
         self.dirty_location_list = list()
@@ -101,7 +112,10 @@ class Env():
 
         return min(temp_list)
 
-    def getOdometry(self, odom):
+    def get_opp_odometry(self, odom):
+        pass
+
+    def get_my_odometry(self, odom):
         self.position = odom.pose.pose.position
         orientation = odom.pose.pose.orientation
         orientation_list = [orientation.x, orientation.y, orientation.z, orientation.w]
@@ -119,8 +133,13 @@ class Env():
 
         self.heading = round(heading, 2)
 
+
+
+
+
     def getState(self, scan):
         # TODO he state depend only by the scan - need to be change that the state will be depend in more things.
+
         scan_range = []
         heading = self.heading
         min_range = 0.13
@@ -195,6 +214,7 @@ class Env():
         rospy.wait_for_service('gazebo/reset_simulation')
 
         try:
+            self.pause_proxy()
             self.reset_proxy()
         except (rospy.ServiceException) as e:
             print("gazebo/reset_simulation service call failed")

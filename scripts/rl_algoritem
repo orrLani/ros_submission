@@ -147,7 +147,7 @@ if __name__ == '__main__':
     # list_of_dirty=[(0.1,0.1),(1,2),(1,4)]
 
     # load the env
-    env = Env(action_size)
+    env = Env(action_size=10,agent_id=0)
     agent = ReinforceAgent(state_size, action_size)
 
     scores, episodes = [], []
