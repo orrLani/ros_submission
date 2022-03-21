@@ -68,7 +68,7 @@ class Env():
         if len(str(msg.data)) == len(str(self.dirty_location_msg)):
             # no update
             return
-
+        ## yyyy
         rospy.loginfo("update dirty!")
         self.dirty_location_msg = msg.data
         rospy.loginfo(msg.data)

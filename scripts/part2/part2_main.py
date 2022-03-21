@@ -446,7 +446,7 @@ if __name__ == '__main__':
     # plt.show()
 
     # agent.run()
-    # c.move_wrapper()
+    c.move_wrapper()
     while not rospy.is_shutdown():
         rospy.spin()
 
