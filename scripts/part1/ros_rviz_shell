@@ -1,0 +1,3 @@
+#!/bin/bash
+killall -9 rviz
+gnome-terminal --title="Rviz" -e "bash -c \"cd ~/my_ws ; source devel/setup.bash ; export TURTLEBOT3_MODEL=burger ; sleep 10 ; roslaunch MRS_236609 multi_bringup.launch ; $SHELL\""

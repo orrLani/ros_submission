@@ -1,0 +1,4 @@
+#!/bin/bash
+cd ~/my_ws
+source devel/setup.bash
+gnome-terminal --title="Python dummy agent" -e "bash -c \"cd ~/my_ws ; source devel/setup.bash ; export TURTLEBOT3_MODEL=burger ; sleep 5 ; rosrun ros_submission dummy_agent.py ; $SHELL\""

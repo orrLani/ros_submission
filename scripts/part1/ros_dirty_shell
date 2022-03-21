@@ -1,0 +1,4 @@
+#!/bin/bash
+cd ~/my_ws
+source devel/setup.bash
+gnome-terminal --title="Python dirty" -e "bash -c \"cd ~/my_ws ; source devel/setup.bash ; export TURTLEBOT3_MODEL=burger ; sleep 5 ; rosrun MRS_236609 dirt_publisher_ex3.py ; $SHELL\""
