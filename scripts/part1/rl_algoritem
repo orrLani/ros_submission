@@ -142,7 +142,7 @@ if __name__ == '__main__':
     result = Float32MultiArray()
     get_action = Float32MultiArray()
 
-    state_size = 26
+    state_size = 30
     action_size = 5
     # list_of_dirty=[(0.1,0.1),(1,2),(1,4)]
 
