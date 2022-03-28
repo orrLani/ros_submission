@@ -17,7 +17,7 @@ class dummy_agent:
         self.states = None
         self.last_position = None
         self.move_new_location = move
-        self.init_location = init_location
+        self.initloginfo_location = init_location
         self.map_service = CostmapUpdater(self.agent_id)
         # wait to map
         while not self.map_service.is_map:
@@ -50,6 +50,10 @@ class dummy_agent:
         print('wow!!')
 
 
+
+
+
+
     def run(self):
 
         plt.imshow(self.static_map)
@@ -57,12 +61,12 @@ class dummy_agent:
         # for location_index in range(0,len(self.locations_map_gazebo),100):
         #     self.locations_map
 
-        for location_index in range(0,len(self.locations_map_gazebo),100):
+        for location_index in range(0,len(self.locations_map_gazebo),1000):
             position = dict()
             position['agent_id'] = self.agent_id
-            position['y'] = math.floor(self.locations_map_gazebo[location_index][0]*10000)/10000.0
-            position['x'] = math.floor(self.locations_map_gazebo[location_index][1]*10000)/10000.0
-            print('i wanna go to location x-{} y-{}'.format( position['x'], position['y']))
+            position['x'] = math.floor(self.locations_map_gazebo[location_index][0]*10000)/10000.0
+            position['y'] = math.floor(self.locations_map_gazebo[location_index][1]*10000)/10000.0
+            # print('i wanna go to location x-{} y-{}'.format( position['x'], position['y']))
             position['w'] = 1.0
             self.move_new_location(**position)
         # self.move_new_location(**self.init_location)

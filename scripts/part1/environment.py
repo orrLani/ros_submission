@@ -68,6 +68,7 @@ class Env():
         self.dirty_proc = None
         self.dummy_agent_proc = None
         self.rviz_proc = None
+        self.first_time = True
 
     # update the dirty
     def get_dirty_update(self, msg):
@@ -101,7 +102,11 @@ class Env():
 
         # check if we need to create dirty or delete dirty
         dirty_collect = Diff(self.dirty_location, dirty_list)
-        self.dirty_location = dirty_list
+        if self.first_time:
+            self.dirty_location = dirty_list
+            self.first_time = False
+        else:
+            self.dirty_location = [0 if i == dirty_collect else i for i in self.dirty_location]
 
         ## how to know who collected
 
@@ -190,7 +195,8 @@ class Env():
             done = True
 
         # robot finish collecting all the dirty
-        if len(self.map_point_dirty_list) == 0:
+        # was len == 0
+        if all(i == 0 for i in self.map_point_dirty_list ):
             done = True
 
         if self.myscore > len(self.map_point_dirty_list)+self.rivalscore:
@@ -204,8 +210,8 @@ class Env():
         score_diff = self.myscore - self.rivalscore
         my_location = [self.position.x , self.position.y]
         rival_location = [self.rival_position.x, self.rival_position.y]
-        dirt_locations = self.dirty_location
-        output =  [score_diff] + my_location + rival_location + scan_range + [heading]
+        dirt_locations = self.dirty_location if self.dirty_location != [] else [0,0,0,0]
+        output =  [score_diff] + my_location + rival_location + scan_range + dirt_locations + [heading]
         return  output, done, done_flag , dirt_locations
         # return scan_range + [heading, current_distance], done
 
@@ -247,12 +253,13 @@ class Env():
 
         total_dist_sum = 0
         for point in dirt_list:
-            Goal.pose.position.x = float(point[0])
-            Goal.pose.position.y = float(point[1])
-            req.goal = Goal
-            req.tolerance = .5
-            resp = get_plan(req.start, req.goal, req.tolerance)
-            total_dist_sum = total_dist_sum + len(resp.plan.poses)
+            if point != 0:
+                Goal.pose.position.x = float(point[0])
+                Goal.pose.position.y = float(point[1])
+                req.goal = Goal
+                req.tolerance = .5
+                resp = get_plan(req.start, req.goal, req.tolerance)
+                total_dist_sum = total_dist_sum + len(resp.plan.poses)
 
         dirt_distane_reward = 1/(1+total_dist_sum)
 
@@ -320,7 +327,7 @@ class Env():
         # reset the simulator
         rospy.loginfo("Prepare to reset the simulator!!")
         rospy.wait_for_service('gazebo/reset_simulation')
-
+        self.first_time = True
         try:
             # self.pause_proxy()
             self.reset_proxy()
@@ -362,12 +369,14 @@ class Env():
         if self.rviz_proc is not None:
             self.rviz_proc.kill()
         time.sleep(10)
-        self.rviz_proc = subprocess.Popen('roslaunch MRS_236609 multi_bringup.launch', shell=True)
-        time.sleep(10)
+        self.rviz_proc = subprocess.Popen('roslaunch MRS_236609 my_bringup.launch', shell=True)
         rospy.loginfo("Rviz was reset ")
+        time.sleep(10)
 
         self.dirty_proc = subprocess.Popen('rosrun MRS_236609 dirt_publisher_ex3.py', shell=True)
+
         self.dummy_agent_proc = subprocess.Popen('rosrun ros_submission dummy_agent.py', shell=True)
+        # self.dummy_agent_proc = subprocess.Popen('rosrun ros_submission simple_agent.py', shell=True)
 
         # subprocess.call('/home/orr/my_ws/src/ros_submission/part1/scripts/ros_rviz_shell')
         # subprocess.call('/home/orr/my_ws/src/ros_submission/scripts/ros_dirty_shell')

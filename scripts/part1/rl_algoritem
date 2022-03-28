@@ -142,7 +142,7 @@ if __name__ == '__main__':
     result = Float32MultiArray()
     get_action = Float32MultiArray()
 
-    state_size = 30
+    state_size = 34
     action_size = 5
     # list_of_dirty=[(0.1,0.1),(1,2),(1,4)]
 
@@ -150,10 +150,10 @@ if __name__ == '__main__':
     env = Env(action_size=10, agent_id=0)
     agent = ReinforceAgent(state_size, action_size)
 
-    scores, episodes = [], []
     global_step = 0
     start_time = time.time()
-    EPISODES = 10
+    # EPISODES = 10
+    scores, episodes = [] , []
     for e in range(agent.load_episode + 1, EPISODES):
         rospy.loginfo('Episode start' + str(e))
         done = False
@@ -161,8 +161,9 @@ if __name__ == '__main__':
         state = env.reset()
         time.sleep(5)
         score = 0
+
         # for t in range(agent.episode_step):
-        for t in range(100):
+        for t in range(1000):
             rospy.loginfo('tick start' + str(t))
             action = agent.getAction(state)
             next_state, reward, done = env.step(action)
@@ -187,7 +188,7 @@ if __name__ == '__main__':
                     json.dump(param_dictionary, outfile)
 
             # time out
-            if t >= 500:
+            if t >= 1000:
                 rospy.loginfo("Time out!!")
                 done_time_out = True
 

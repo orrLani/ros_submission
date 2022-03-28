@@ -34,7 +34,8 @@ def movebase_client(agent_id=0, x=1.0, y=0.5, w=1.0):
     client.send_goal(goal)
     # Waits for the server to finish performing the action.
     wait = client.wait_for_result()
-
+    if not wait:
+        print(" oh oh ")
     # GetPlan - example of functionality
 
     # start = PoseStamped()
