@@ -211,7 +211,9 @@ class Env():
         my_location = [self.position.x , self.position.y]
         rival_location = [self.rival_position.x, self.rival_position.y]
         dirt_locations = self.dirty_location if self.dirty_location != [] else [0,0,0,0]
-        output =  [score_diff] + my_location + rival_location + scan_range + dirt_locations + [heading]
+        nn_dirt_intput = [list(i) if type(i) is tuple else list((0,0)) for i in dirt_locations]
+        nn_dirt_ready = [item for sublist in nn_dirt_intput for item in sublist]
+        output =  [score_diff] + my_location + rival_location + scan_range + nn_dirt_ready + [heading]
         return  output, done, done_flag , dirt_locations
         # return scan_range + [heading, current_distance], done
 
